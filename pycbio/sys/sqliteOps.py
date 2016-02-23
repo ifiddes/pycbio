@@ -1,9 +1,9 @@
 """
 Convenience library for interfacing with a sqlite database.
 TODO: use modern SQLAlchemy instead of this.
+TODOv2: SQLAlchemy is hard, man.
 """
 import os
-import sys
 from collections import defaultdict
 import sqlite3 as sql
 import pandas as pd
@@ -13,8 +13,8 @@ __author__ = "Ian Fiddes"
 
 
 class ExclusiveSqlConnection(object):
-    """meant to be used with a with statement to ensure proper closure"""
-    def __init__(self, path, timeout=1200):
+    """Context manager for an exclusive SQL connection"""
+    def __init__(self, path, timeout=6000):
         self.path = path
         self.timeout = timeout
 
@@ -38,7 +38,7 @@ def attach_database(con, path, name):
     con.execute("ATTACH DATABASE '{}' AS {}".format(path, name))
 
 
-def open_database(path, timeout=1200):
+def open_database(path, timeout=6000):
     con = sql.connect(path, timeout=timeout)
     cur = con.cursor()
     return con, cur
@@ -118,7 +118,7 @@ def get_non_unique_query_dict(cur, query, flatten=True):
             d[r[0]].append(r[1:])
     except sql.OperationalError, exc:
         raise RuntimeError("query failed: {}.\nOriginal error message: {}".format(query, exc))
-    return general_lib.flatten_defaultdict_list(d) if flatten is True else d
+    return flatten_defaultdict_list(d) if flatten is True else d
 
 
 def get_multi_index_query_dict(cur, query, num_indices=2):

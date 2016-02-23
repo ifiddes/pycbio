@@ -5,15 +5,12 @@ Needs the python library pyfasta installed.
 Original Author: Dent Earl
 Modified by Ian Fiddes
 """
-
-import string
-import copy
-import os
 import math
 import re
 from itertools import izip
 from pycbio.sys.fileOps import tokenizeStream as tokenize_stream
-from pyfasta import Fasta, NpyFastaRecord
+from pycbio.bio.bio import convert_strand, reverse_complement, codon_to_amino_acid, translate_sequence
+from pycbio.bio.intervals import ChromosomeInterval
 
 __author__ = "Ian Fiddes"
 

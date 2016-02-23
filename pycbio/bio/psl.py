@@ -195,3 +195,15 @@ def aln_id_is_transmap(aln_id):
     Uses remove_augustus_alignment_number to determine if this transcript is an Augustus transcript
     """
     return True if remove_alignment_number(aln_id) != aln_id else False
+
+
+def invert_q_starts(ref_aln):
+    """
+    Inverts the strand of a PSL
+    """
+    if ref_aln.strand == "-":
+        ref_starts = [ref_aln.q_size - (ref_aln.q_starts[i] + ref_aln.block_sizes[i]) for i in
+                      xrange(len(ref_aln.q_starts))]
+    else:
+        ref_starts = ref_aln.q_starts
+    return ref_starts
