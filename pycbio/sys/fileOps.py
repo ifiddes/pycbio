@@ -1,7 +1,7 @@
 # Copyright 2006-2012 Mark Diekhans
 """Miscellaneous file operations"""
 
-import os, errno, sys, stat, fcntl, socket, random, shutil, string
+import os, errno, sys, stat, fcntl, socket, random, shutil, string, gzip
 
 
 class TemporaryFilePath(object):
@@ -31,7 +31,7 @@ class TemporaryDirectoryPath(object):
         return self.path
 
     def __exit__(self, type, value, traceback):
-        shutil.rmTree(self.path)
+        rmTree(self.path)
 
 
 _pipelineMod = None
@@ -47,9 +47,11 @@ def ensureDir(dir):
     """Ensure that a directory exists, creating it (and parents) if needed."""
     try:
         os.makedirs(dir)
-    except OSError as ex:
-        if ex.errno != errno.EEXIST:
-            raise e
+    except OSError as exc:  # Python >2.5
+        if exc.errno == errno.EEXIST and os.path.isdir(dir):
+            pass
+        else:
+            raise
 
 def ensureFileDir(fname):
     """Ensure that the directory for a file exists, creating it (and parents) if needed.
@@ -74,7 +76,7 @@ def rmFiles(files):
 
 def rmTree(root):
     "In case anyone has any legacy uses"
-    shutil.rmTree(root)
+    shutil.rmtree(root)
 
 def isCompressed(path):
     "determine if a file appears to be compressed by extension"
@@ -102,18 +104,17 @@ def decompressCmd(path, default="cat"):
     else:
         return default
 
-# FIXME: should this use python gzip/bzip2 classes??
 def opengz(file, mode="r"):
     """open a file, if it ends in an extension indicating compression, open
     with a decompression pipe.  Only reading is currently supported"""
     # FIXME: implement write
-    f = open(filename, 'rb')
+    f = open(file, 'rb')
     if f.read(2) == '\x1f\x8b':
         f.seek(0)
         return gzip.GzipFile(fileobj=f)
     else:
         f.close()
-        return open(filename, 'r')
+        return open(file, 'r')
 
 # FIXME: make these consistent and remove redundant code.  Maybe use
 # keyword for flush
@@ -173,16 +174,6 @@ def prfErr(*objs):
         sys.stderr.write(str(o))
     sys.stderr.write("\n")
     sys.stderr.flush()
-
-def prsOut(*objs):
-    "write each str(obj) to stdout, separating with spaces and followed by a newline"
-    n = 0
-    for o in objs:
-        if n > 0:
-            sys.stdout.write(' ')
-        sys.stdout.write(str(o))
-        n += 1
-    sys.stdout.write("\n")
 
 def prsErr(*objs):
     "write each str(obj) to stderr, separating with spaces and followed by a newline"
@@ -256,7 +247,7 @@ def iterLines(fspec):
         if isinstance(fspec, str):
             fh.close()
 
-def iterRows(fspec):
+def iterRows(fspec, skipLines=0):
     """generator over rows in a tab-separated file.  Each line of the file is
     parsed, split into columns and returned.  If fspec is a string, open the
     file and close at end. Otherwise it is file-like object and will not be
@@ -266,6 +257,7 @@ def iterRows(fspec):
     else:
         fh = fspec
     try:
+        _ = [fh.next() for _ in range(skipLines)]
         for line in fh:
             yield line[0:-1].split("\t")
     finally:
