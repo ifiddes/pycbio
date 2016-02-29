@@ -108,13 +108,14 @@ def opengz(file, mode="r"):
     """open a file, if it ends in an extension indicating compression, open
     with a decompression pipe.  Only reading is currently supported"""
     # FIXME: implement write
+    assert mode in ['r', 'rb', 'a', 'ab']
     f = open(file, 'rb')
     if f.read(2) == '\x1f\x8b':
         f.seek(0)
         return gzip.GzipFile(fileobj=f)
     else:
         f.close()
-        return open(file, 'r')
+        return open(file, mode)
 
 # FIXME: make these consistent and remove redundant code.  Maybe use
 # keyword for flush
