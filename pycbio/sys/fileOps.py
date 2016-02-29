@@ -233,7 +233,7 @@ def readLine(fh):
         l = l[:-1]
     return l
 
-def iterLines(fspec):
+def iterLines(fspec, skipLines=0):
     """generator over lines in file, dropping newlines.  If fspec is a string,
     open the file and close at end. Otherwise it is file-like object and will
     not be closed."""
@@ -242,6 +242,7 @@ def iterLines(fspec):
     else:
         fh = fspec
     try:
+        _ = [fh.next() for _ in range(skipLines)]
         for line in fh:
             yield line[:-1]
     finally:
