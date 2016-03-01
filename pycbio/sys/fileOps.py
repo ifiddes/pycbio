@@ -323,3 +323,9 @@ def tokenizeStream(stream):
         if line != '' and not line.startswith("#"):
             tokens = line.rstrip().split("\t")
             yield tokens
+
+def touch(path):
+    """
+    Creates a file at path
+    """
+    _ = open(path, 'w').close()
