@@ -8,7 +8,7 @@ Modified by Ian Fiddes
 import math
 import re
 from itertools import izip
-from pycbio.sys.fileOps import tokenizeStream as tokenize_stream
+from pycbio.sys.fileOps import iterRows
 from pycbio.bio.bio import convert_strand, reverse_complement, codon_to_amino_acid, translate_sequence
 from pycbio.bio.intervals import ChromosomeInterval
 
@@ -823,7 +823,7 @@ def transcript_iterator(gp_file):
     Given a path to a standard genePred file return a list of GenePredTranscript objects
     """
     with open(gp_file) as inf:
-        for tokens in tokenize_stream(inf):
+        for tokens in iterRows(inf):
             t = GenePredTranscript(tokens)
             yield t.name, t
 

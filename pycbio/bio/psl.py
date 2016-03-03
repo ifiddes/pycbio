@@ -4,11 +4,9 @@ Convenience library for working with psl alignment files.
 Original Author: Dent Earl
 Modified by Ian Fiddes
 """
-
-from collections import Counter
 import re
 from pycbio.sys.mathOps import format_ratio
-from pycbio.sys.fileOps import tokenizeStream as tokenize_stream
+from pycbio.sys.fileOps import iterRows
 
 __author__ = "Ian Fiddes"
 
@@ -147,7 +145,7 @@ def psl_iterator(psl_file):
     Iterates over PSL file generating PslRow objects returning the name and the object itself
     """
     with open(psl_file) as inf:
-        for tokens in tokenize_stream(inf):
+        for tokens in iterRows(inf):
             psl = PslRow(tokens)
             yield psl.q_name, psl
 

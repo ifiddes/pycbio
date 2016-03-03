@@ -262,7 +262,7 @@ def iterLines(fspec, skipLines=0):
         if isinstance(fspec, str):
             fh.close()
 
-def iterRows(fspec, skipLines=0):
+def iterRows(fspec, skipLines=0, skipComments=True):
     """generator over rows in a tab-separated file.  Each line of the file is
     parsed, split into columns and returned.  If fspec is a string, open the
     file and close at end. Otherwise it is file-like object and will not be
@@ -274,7 +274,8 @@ def iterRows(fspec, skipLines=0):
     try:
         _ = [fh.next() for _ in range(skipLines)]
         for line in fh:
-            yield line[0:-1].split("\t")
+            if not line.startswith('#'):
+                yield line[0:-1].split("\t")
     finally:
         if isinstance(fspec, str):
             fh.close()
@@ -333,15 +334,6 @@ def getDevNull():
     if _devNullFh is None:
         _devNullFh = open("/dev/null", "r+")
     return _devNullFh
-
-def tokenizeStream(stream):
-    """
-    Iterator through a tab delimited file, returning lines as list of tokens, ignoring comments
-    """
-    for line in stream:
-        if line != '' and not line.startswith("#"):
-            tokens = line.rstrip().split("\t")
-            yield tokens
 
 def touch(path):
     """
