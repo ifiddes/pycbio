@@ -53,6 +53,19 @@ def ensureDir(dir):
         else:
             raise
 
+def ensureFileDir(file_path):
+    """Ensure that the parent directory for a file exists"""
+    dir = os.path.dirname(file_path)
+    if dir == '':
+        return
+    try:
+        os.makedirs(dir)
+    except OSError as exc:  # Python >2.5
+        if exc.errno == errno.EEXIST and os.path.isdir(dir):
+            pass
+        else:
+            raise
+
 def ensureFileDir(fname):
     """Ensure that the directory for a file exists, creating it (and parents) if needed.
     Returns the directory path"""
@@ -298,7 +311,13 @@ def atomicTmpFile(finalPath):
 
 def atomicInstall(tmpPath, finalPath):
     "atomic install of tmpPath as finalPath"
-    os.rename(tmpPath, finalPath)
+    try:
+        os.rename(tmpPath, finalPath)
+    except OSError:
+        tmp = tmpFileGet(tmpDir=os.path.dirname(finalPath))
+        shutil.copy(tmpPath, tmp)
+        os.rename(tmp, finalPath)
+        os.remove(tmpPath)
 
 def uncompressedBase(path):
     "return the file path, removing a compression extension if it exists"
