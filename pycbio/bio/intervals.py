@@ -207,7 +207,7 @@ def gap_merge_intervals(intervals, gap):
     Merges intervals within gap bases of each other
     """
     new_intervals = []
-    for interval in intervals:
+    for interval in sorted(intervals):
         if not new_intervals:
             new_intervals.append(copy.deepcopy(interval))
         elif interval.separation(new_intervals[-1]) <= gap:
