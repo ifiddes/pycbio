@@ -232,5 +232,8 @@ def interval_not_within_wiggle_room_intervals(intervals, interval, wiggle_room=0
     """
     Same thing as intervalNotIntersectIntervals but looks within wiggleRoom bases to count a valid lack of intersection
     """
-    separation = [sum(interval.symmetric_separation(target_interval)) for target_interval in intervals]
+    try:
+        separation = [sum(interval.symmetric_separation(target_interval)) for target_interval in intervals]
+    except TypeError:
+        return False
     return not any([x <= 2 * wiggle_room for x in separation])  # we allow wiggle on both sides
