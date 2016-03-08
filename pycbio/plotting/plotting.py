@@ -273,37 +273,34 @@ def side_by_side_unequal_barplot(results, legend_labels, path, title_string, col
     pdf.close()
 
 
-def stacked_side_by_side_unequal_barplot(results, legend_labels, path, title_string, num_columns=2,
+def stacked_side_by_side_unequal_barplot(results, legend_labels, path, title_string,
                                          color_palette=palette, breaks=10.0, border=True,
                                          ylabel="Number of transcripts"):
     """
-    DOESNT WORK YET
     Boilerplate code that will produce a side by side barplot. Expects results to be a list of lists of lists in
     the form [(colA, colB), (values)]
     At this point only supports pairs, higher orders will not work.
     Should be in the same order as legend_labels or your legend will be wrong.
     """
-    def grouper(iterable, n=2):
-        return itertools.izip(*[iter(iterable)] * n)
-    names, values = zip(*results)
-    num_groups = len(names) / num_columns
-    num_columns = len(names[0])
-    names = [" ".join(x) for x in names]
-    shorter_bar_width = bar_width / len(values[0])
-    max_y_value = max(sum(x) for x in values)
+    num_columns = len(results)
+    shorter_bar_width = bar_width / num_columns
+    max_y_value = max([sum(col) for d in results for col in zip(*d)[1]])
+    names = zip(*results[0])[0]
     ax, fig, pdf = base_unequal_barplot(max_y_value, names, path, title_string, ylabel, breaks, border=border,
                                         has_legend=True)
-    rowvals = zip(*values)
-    artists = []
-    for i, row in enumerate(rowvals):
-        cumulative = [np.zeros(num_groups)] * num_columns
-        for j in range(num_columns):
-            vals = np.array([x for p, x in enumerate(row) if p % num_columns == 0])
-            bars = ax.bar(np.arange(len(vals)) + shorter_bar_width * j, vals, shorter_bar_width,
-                          color=color_palette[i % len(color_palette)], linewidth=0.0, alpha=1.0)
-            cumulative[j] += vals
-        artists.append(bars[0])
-    fig.legend([x for x in artists[::-1]], legend_labels[::-1], bbox_to_anchor=(1, 0.8), fontsize=11,
+    bars = []
+    c = 0
+    for i, r in enumerate(results):
+        names, values = zip(*r)
+        cumulative = np.zeros(len(values))
+        for j, d in enumerate(np.asarray(values).transpose()):
+            xpos = np.arange(len(values)) + shorter_bar_width * i
+            bars.append(ax.bar(xpos, d, shorter_bar_width, bottom=cumulative,
+                               color=color_palette[c % len(color_palette)],
+                               linewidth=0.0, alpha=1.0))
+            cumulative += d
+            c += 1
+    fig.legend([x for x in bars[::-1]], legend_labels[::-1], bbox_to_anchor=(1, 0.8), fontsize=11,
                frameon=True, title="Category")
     if max(len(x) for x in names) > 15:
         adjust_x_labels(ax, names)

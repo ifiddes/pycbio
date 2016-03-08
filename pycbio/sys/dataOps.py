@@ -50,7 +50,7 @@ def grouper(iterable, size):
         chunk = tuple(itertools.islice(it, size))
 
 
-def convert_dicts_to_dataframe(data_dict, norm=False, sort_column=None):
+def munge_nested_dicts_for_plotting(data_dict, norm=False, sort_column=None):
     """
     Munges nested dictionaries into a pandas DataFrame. If sort_column is not None, will order rows based on values
     in that column. If sort_column is None, will maintain internal dictionary orders. Obviously, if the internal
