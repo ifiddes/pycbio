@@ -50,31 +50,23 @@ def ensureDir(dir):
     except OSError as exc:  # Python >2.5
         if exc.errno == errno.EEXIST and os.path.isdir(dir):
             pass
+        elif len(dir) == 0:
+            pass
         else:
             raise
 
 def ensureFileDir(file_path):
     """Ensure that the parent directory for a file exists"""
     dir = os.path.dirname(file_path)
-    if dir == '':
-        return
     try:
         os.makedirs(dir)
     except OSError as exc:  # Python >2.5
         if exc.errno == errno.EEXIST and os.path.isdir(dir):
             pass
+        elif len(dir) == 0:
+            pass
         else:
             raise
-
-def ensureFileDir(fname):
-    """Ensure that the directory for a file exists, creating it (and parents) if needed.
-    Returns the directory path"""
-    dir = os.path.dirname(fname)
-    if len(dir) > 0:
-        ensureDir(dir)
-        return dir
-    else:
-        return "."
 
 def rmFiles(files):
     """remove one or more files if they exist. files can be a single file
