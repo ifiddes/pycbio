@@ -599,16 +599,54 @@ class GenePredTranscript(Transcript):
         self._get_cds_size()
         self._get_size()
 
+
+    def get_cds(self, seq_dict, in_frame=True):
+        """
+        Return the CDS sequence (as a string) for the transcript
+        (based on the exons) using a sequenceDict as the sequence source.
+        The returned sequence is in the correct 5'-3' orientation (i.e. it has
+        been reverse complemented if necessary).
+        Overrides get_cds in GenePredTranscript to provide frame functionality
+        TODO: now loses the store-and-reuse functionality to avoid slicing offset sizes each time.
+        """
+        sequence = seq_dict[self.chromosome]
+        assert self.stop <= len(sequence)
+        # make sure this isn't a non-coding gene
+        if self.thick_start == self.thick_stop == 0:
+            return ""
+        s = []
+        for e in self.exon_intervals:
+            if self.thick_start < e.start and e.stop < self.thick_stop:
+                # squarely in the CDS
+                s.append(sequence[e.start:e.stop])
+            elif e.start <= self.thick_start < e.stop < self.thick_stop:
+                # thickStart marks the start of the CDS
+                s.append(sequence[self.thick_start:e.stop])
+            elif e.start <= self.thick_start and self.thick_stop <= e.stop:
+                # thickStart and thickStop mark the whole CDS
+                s.append(sequence[self.thick_start: self.thick_stop])
+            elif self.thick_start < e.start < self.thick_stop <= e.stop:
+                # thickStop marks the end of the CDS
+                s.append(sequence[e.start:self.thick_stop])
+        if not self.strand:
+            cds = reverse_complement("".join(s))
+        else:
+            cds = "".join(s)
+        if in_frame is True:
+            offset = find_offset(self.exon_frames, self.strand)
+            cds = cds[offset:]
+        self.cds = cds
+        return cds
+
     def get_protein_sequence(self, seq_dict):
         """
         Returns the translated protein sequence for this transcript in single
         character space. Overrides this function in the Transcript class to make use of frame information.
         """
-        offset = find_offset(self.exon_frames, self.strand)
         cds = self.get_cds(seq_dict)
         if len(cds) < 3:
             return ""
-        return translate_sequence(cds[offset:].upper())
+        return translate_sequence(cds)
 
     def get_gene_pred(self, name=None, start_offset=None, stop_offset=None, name2=None, uid=None):
         """
@@ -632,7 +670,6 @@ class GenePredTranscript(Transcript):
         uid = self.id if uid is None else uid
         return [name, chrom, strand, start, stop, thick_start, thick_stop, len(self.exons), exon_starts, exon_ends,
                 uid, name2, self.cds_start_stat, self.cds_end_stat, exon_frames]
-
 
 
 class Exon(object):

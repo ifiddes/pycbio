@@ -44,36 +44,6 @@ def open_database(path, timeout=6000):
     return con, cur
 
 
-def attach_databases(comp_ann_path, mode):
-    """
-    Attaches all of the databases needed for this execution mode.
-    """
-    assert mode in ["reference", "augustus", "transMap"]
-    classify_path = os.path.join(comp_ann_path, "classify.db")
-    con, cur = open_database(classify_path)
-    details_path = os.path.join(comp_ann_path, "details.db")
-    attach_database(con, details_path, "details")
-    attr_path = os.path.join(comp_ann_path, "attributes.db")
-    attach_database(con, attr_path, "attributes")
-    if mode == "augustus":
-        aug_classify_path = os.path.join(comp_ann_path, "augustus_classify.db")
-        aug_details_path = os.path.join(comp_ann_path, "augustus_details.db")
-        aug_attributes_path = os.path.join(comp_ann_path, "augustus_attributes.db")
-        attach_database(con, aug_classify_path, "augustus")
-        attach_database(con, aug_details_path, "augustus_details")
-        attach_database(con, aug_attributes_path, "augustus_attributes")
-    return con, cur
-
-
-def load_data(con, genome, columns, primary_key="AlignmentId", table="main"):
-    """
-    Use pandas to load a sql query into a dataframe.
-    """
-    columns = ",".join(columns)
-    query = "SELECT {},{} FROM {}.'{}'".format(primary_key, columns, table, genome)
-    return pd.read_sql_query(query, con, index_col=primary_key)
-
-
 def execute_query(cur, query):
     """
     Wraps around cur.execute(query) to handle exceptions and report more useful information than what sqlite3 does
