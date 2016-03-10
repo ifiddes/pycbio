@@ -599,7 +599,6 @@ class GenePredTranscript(Transcript):
         self._get_cds_size()
         self._get_size()
 
-
     def get_cds(self, seq_dict, in_frame=True):
         """
         Return the CDS sequence (as a string) for the transcript
