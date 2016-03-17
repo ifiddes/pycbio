@@ -202,18 +202,21 @@ def base_unequal_barplot(max_y_value, names, path, title_string, ylabel, breaks,
     return ax, fig, pdf
 
 
-def unequal_barplot(results, path, title_string, color_palette=palette, breaks=10.0, border=False,
-                    ylabel="Number of transcripts"):
+def unequal_barplot(results, path, title_string, color=None, breaks=10.0, border=False,
+                    ylabel="Number of transcripts", max_y_value=None):
     """
     Boilerplate code that will produce a barplot. Expects results to be a list of lists of lists in the form
     [[name1, val1], [name2, val2]].
     Should be in the same order as legend_labels or your legend will be wrong.
     """
     names, values = zip(*results)
-    max_y_value = max(values)
+    if max_y_value is None:
+        max_y_value = max(values)
+    if color is None:
+        color = palette[0]
     ax, fig, pdf = base_unequal_barplot(max_y_value, names, path, title_string, ylabel, breaks, border=border,
                                         has_legend=True)
-    bars = ax.bar(range(len(names)), values, bar_width, color=palette[0])
+    bars = ax.bar(range(len(names)), values, bar_width, color=color)
     if max(len(x) for x in names) > 15:
         adjust_x_labels(ax, names)
     fig.savefig(pdf, format='pdf')
@@ -222,14 +225,15 @@ def unequal_barplot(results, path, title_string, color_palette=palette, breaks=1
 
 
 def stacked_unequal_barplot(results, legend_labels, path, title_string, color_palette=palette, breaks=10.0, border=True,
-                            ylabel="Number of transcripts"):
+                            ylabel="Number of transcripts", max_y_value=None, legend_title=None):
     """
     Boilerplate code that will produce a stacked barplot. Expects results to be a list of lists of lists in the form
     [[name1, [value1a, value1b]], [name2, [value2a, value2b]].
     Should be in the same order as legend_labels or your legend will be wrong.
     """
     names, values = zip(*results)
-    max_y_value = max(sum(x) for x in values)
+    if max_y_value is None:
+        max_y_value = max(sum(x) for x in values)
     ax, fig, pdf = base_unequal_barplot(max_y_value, names, path, title_string, ylabel, breaks, border=border,
                                         has_legend=True)
     bars = []
@@ -239,8 +243,10 @@ def stacked_unequal_barplot(results, legend_labels, path, title_string, color_pa
                            color=color_palette[i % len(color_palette)],
                            linewidth=0.0, alpha=1.0))
         cumulative += d
+    if legend_title is None:
+        legend_title = 'Category'
     fig.legend([x[0] for x in bars[::-1]], legend_labels[::-1], bbox_to_anchor=(1, 0.8), fontsize=11,
-               frameon=True, title="Category")
+               frameon=True, title=legend_title)
     if max(len(x) for x in names) > 15:
         adjust_x_labels(ax, names)
     fig.savefig(pdf, format='pdf')
