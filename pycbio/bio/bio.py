@@ -2,8 +2,10 @@
 Basic biology related functions
 """
 import string
+import array
 import os
 from pyfasta import Fasta, NpyFastaRecord
+from pycbio.sys.fileOps import opengz
 
 
 class UpperNpyFastaRecord(NpyFastaRecord):
@@ -14,6 +16,69 @@ class UpperNpyFastaRecord(NpyFastaRecord):
     def __getitem__(self, islice):
         d = self.getdata(islice)
         return d.tostring().decode().upper() if self.as_string else map(string.upper, d)
+
+
+def read_fasta(path_or_handle, validate='DNA'):
+    """iteratively yields a sequence for each '>' it encounters, ignores '#' lines
+    if validate is true, will ensure that each row contains valid DNA fasta characters
+    """
+    assert validate in ['DNA', 'protein', None], "Valid options for validate are DNA, protein or None"
+    if isinstance(path_or_handle, str):
+        fh = opengz(path_or_handle)
+    else:
+        fh = path_or_handle
+    line = fh.readline()
+    chars_to_remove = "\n "
+    if validate is 'DNA':
+        valid_chars = set('ACGTUYSWKMBDHVNacgtuyswkmbdhvn.-')
+    elif validate is 'protein':
+        valid_chars = set('ABCDEFGHIKLMPQSRTVWXYZU')
+    while line != '':
+        if line[0] == '>':
+            name = line[1:-1]
+            line = fh.readline()
+            seq = array.array('c')
+            while line != '' and line[0] != '>':
+                line = line.translate(None, chars_to_remove)
+                if len(line) > 0 and line[0] != '#':
+                    seq.extend(line)
+                line = fh.readline()
+            if validate is not None:
+                try:
+                    assert all(x in valid_chars for x in seq)
+                except AssertionError:
+                    bad_chars = {x for x in seq if x not in valid_chars}
+                    raise RuntimeError("Invalid FASTA character(s) see in fasta sequence: {}".format(bad_chars))
+            yield name, seq.tostring()
+        else:
+            line = fh.readline()
+    if isinstance(path_or_handle, str):
+        fh.close()
+
+
+def write_fasta(path_or_handle, name, seq):
+    """Writes out fasta file. if path ends in gz, will be gzipped.
+    """
+    if isinstance(path_or_handle, str):
+        fh = opengz(path_or_handle, 'w')
+    else:
+        fh = path_or_handle
+    valid_chars = {x for x in string.ascii_letters + "-"}
+    try:
+        assert any([isinstance(seq, unicode), isinstance(seq, str)])
+    except AssertionError:
+        raise RuntimeError("Sequence is not unicode or string")
+    try:
+        assert all(x in valid_chars for x in seq)
+    except AssertionError:
+        bad_chars = {x for x in seq if x not in valid_chars}
+        raise RuntimeError("Invalid FASTA character(s) see in fasta sequence: {}".format(bad_chars))
+    fh.write(">%s\n" % name)
+    chunk_size = 100
+    for i in xrange(0, len(seq), chunk_size):
+        fh.write("%s\n" % seq[i:i+chunk_size])
+    if isinstance(path_or_handle, str):
+        fh.close()
 
 
 def convert_strand(s):

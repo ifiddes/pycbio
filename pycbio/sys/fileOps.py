@@ -110,17 +110,21 @@ def decompressCmd(path, default="cat"):
         return default
 
 def opengz(file, mode="r"):
-    """open a file, if it ends in an extension indicating compression, open
-    with a decompression pipe.  Only reading is currently supported"""
-    # FIXME: implement write
-    assert mode in ['r', 'rb', 'a', 'ab']
+    """Transparently open a potentially gzipped file. If mode is writing, infer compression based on
+    mode + file ending."""
+    assert mode in ['r', 'rb', 'a', 'ab', 'w', 'wb']
+    if mode == 'wb' or (mode == 'w' and file.endswith('.gz')):
+        return gzip.open(file, 'wb')
+    elif mode == 'w':
+        return open(file, 'w')
     f = open(file, 'rb')
     if f.read(2) == '\x1f\x8b':
         f.seek(0)
-        return gzip.GzipFile(fileobj=f)
+        return gzip.GzipFile(fileobj=f, mode=mode)
     else:
         f.close()
         return open(file, mode)
+
 
 # FIXME: make these consistent and remove redundant code.  Maybe use
 # keyword for flush
