@@ -990,7 +990,7 @@ def get_gp_ids(gp):
     """
     Get all unique gene IDs from a genePred
     """
-    return {x[0] for x in tokenize_stream(open(gp))}
+    return {x[0] for x in iterRows(open(gp))}
 
 
 def gp_chrom_filter(gp, filter_chrom=re.compile("(Y)|(chrY)")):
@@ -999,7 +999,7 @@ def gp_chrom_filter(gp, filter_chrom=re.compile("(Y)|(chrY)")):
     """
     f_h = open(gp)
     ret = set()
-    for x in tokenize_stream(f_h):
+    for x in iterRows(f_h):
         if filter_chrom.match(x[1]):
             ret.add(x[0])
     return ret

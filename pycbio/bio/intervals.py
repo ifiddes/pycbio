@@ -3,6 +3,7 @@ Sequence Intervals
 """
 import copy
 from pycbio.bio.bio import convert_strand, reverse_complement
+from pycbio.sys.fileOps import iterRows
 
 
 class ChromosomeInterval(object):
@@ -237,3 +238,21 @@ def interval_not_within_wiggle_room_intervals(intervals, interval, wiggle_room=0
     except TypeError:
         return False
     return not any([x <= 2 * wiggle_room for x in separation])  # we allow wiggle on both sides
+
+
+def build_intervals_from_bed(bed, strand=None):
+    """
+    Produces a sorted list of intervals from a BED
+    """
+    r = set()
+    for l in iterRows(bed):
+        assert len(l) in [3, 4, 6, 12], 'Wrong BED format: {}'.format(len(l))
+        if strand is not None:
+            s = strand
+        elif len(l) < 6:
+            s = '.'
+        else:
+            s = l[5]
+        r.add(ChromosomeInterval(l[0], int(l[1]), int(l[2]), s))
+    r = sorted(r, key=lambda x: (x.chromosome, x.start))
+    return r
