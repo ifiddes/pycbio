@@ -67,6 +67,7 @@ def munge_nested_dicts_for_plotting(data_dict, norm=False, sort_column=None):
     else:
         row_order = data_dict[data_dict.keys()[0]].keys()
     df = df.reindex(row_order)
+    df = df.fillna(0)
     if norm is True:
         df = 100 * df.div(df.sum(axis=0), axis=1)
     return [[x[0], x[1].tolist()] for x in df.iteritems()], list(row_order)
