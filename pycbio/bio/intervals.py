@@ -12,9 +12,9 @@ class ChromosomeInterval(object):
     False or None (if no strand)
     interval arithmetic adapted from http://code.activestate.com/recipes/576816-interval/
     """
-    __slots__ = ('chromosome', 'start', 'stop', 'strand')    # conserve memory
+    __slots__ = ('chromosome', 'start', 'stop', 'strand', 'name')
 
-    def __init__(self, chromosome, start, stop, strand):
+    def __init__(self, chromosome, start, stop, strand, name=None):
         self.chromosome = str(chromosome)
         assert start <= stop
         self.start = int(start)    # 0 based
@@ -22,6 +22,7 @@ class ChromosomeInterval(object):
         if strand not in [True, False, None]:
             strand = convert_strand(strand)
         self.strand = strand       # True or False
+        self.name = name
 
     def __len__(self):
         return abs(self.stop - self.start)
@@ -66,6 +67,14 @@ class ChromosomeInterval(object):
         if self.strand != other.strand or self.chromosome != other.chromosome:
             return None
         return ChromosomeInterval(self.chromosome, self.start - other.start, self.stop - other.stop, self.strand)
+
+    def __repr__(self):
+        if self.name is None:
+            return "ChromosomeInterval('{}', {}, {}, '{}')".format(self.chromosome, self.start, self.stop,
+                                                                   convert_strand(self.strand))
+        else:
+            return "ChromosomeInterval('{}', {}, {}, '{}', '{}')".format(self.chromosome, self.start, self.stop,
+                                                                         convert_strand(self.strand), self.name)
 
     @property
     def is_null(self):
@@ -131,29 +140,35 @@ class ChromosomeInterval(object):
             return ChromosomeInterval(self.chromosome, self.start, self.stop, self.strand)
         return ChromosomeInterval(self.chromosome, self.start, other.stop, self.strand)
 
-    def overlap(self, other):
+    def overlap(self, other, stranded=False):
         """
         Returns True if this interval overlaps other (if they are on the same strand and chromosome)
         """
         if self.chromosome != other.chromosome:
             return False
+        if stranded is True and self.strand != other.strand:
+            return False
         if self > other:
             other, self = self, other
         return self.stop > other.start
 
-    def subset(self, other):
+    def subset(self, other, stranded=False):
         """
         Returns True if this interval is a subset of the other interval (if they are on the same strand and chromosome)
         """
         if self.chromosome != other.chromosome:
             return False
+        if stranded is True and self.strand != other.strand:
+            return False
         return self.start >= other.start and self.stop <= other.stop
 
-    def proper_subset(self, other):
+    def proper_subset(self, other, stranded=False):
         """
         same a subset, but only if other is entirely encased in this interval.
         """
         if self.chromosome != other.chromosome:
+            return False
+        if stranded is True and self.strand != other.strand:
             return False
         return self.start > other.start and self.stop < other.stop
 
@@ -187,20 +202,15 @@ class ChromosomeInterval(object):
         return [self.chromosome, self.start, self.stop, name, 0, convert_strand(self.strand), self.start, self.stop,
                 rgb, 1, len(self), 0]
 
-    def get_sequence(self, seq_dict, strand=True):
+    def get_sequence(self, seq_dict, stranded=True):
         """
         Returns the sequence for this intron in transcript orientation (reverse complement as necessary)
         If strand is False, returns the + strand regardless of transcript orientation.
         """
-        if strand is False or self.strand is True:
+        if stranded is False or self.strand is True:
             return seq_dict[self.chromosome][self.start:self.stop]
         if self.strand is False:
             return reverse_complement(seq_dict[self.chromosome][self.start:self.stop])
-        assert False
-
-    def __repr__(self):
-        return "ChromosomeInterval('{}', {}, {}, '{}')".format(self.chromosome, self.start, self.stop,
-                                                               convert_strand(self.strand))
 
 
 def gap_merge_intervals(intervals, gap):
