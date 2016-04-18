@@ -32,7 +32,9 @@ def read_fasta(path_or_handle, validate='DNA'):
     if validate is 'DNA':
         valid_chars = set('ACGTUYSWKMBDHVNacgtuyswkmbdhvn.-')
     elif validate is 'protein':
-        valid_chars = set('ABCDEFGHIKLMPQSRTVWXYZU')
+        valid_chars = set('ABCDEFGHIKLMPQSRTVWXYZUabcdefghiklmpqsrtvwxyzuNn.-')
+    else:
+        valid_chars = set()
     while line != '':
         if line[0] == '>':
             name = line[1:-1]
@@ -56,7 +58,7 @@ def read_fasta(path_or_handle, validate='DNA'):
         fh.close()
 
 
-def write_fasta(path_or_handle, name, seq):
+def write_fasta(path_or_handle, name, seq, chunk_size=100):
     """Writes out fasta file. if path ends in gz, will be gzipped.
     """
     if isinstance(path_or_handle, str):
@@ -74,7 +76,6 @@ def write_fasta(path_or_handle, name, seq):
         bad_chars = {x for x in seq if x not in valid_chars}
         raise RuntimeError("Invalid FASTA character(s) see in fasta sequence: {}".format(bad_chars))
     fh.write(">%s\n" % name)
-    chunk_size = 100
     for i in xrange(0, len(seq), chunk_size):
         fh.write("%s\n" % seq[i:i+chunk_size])
     if isinstance(path_or_handle, str):
@@ -152,7 +153,6 @@ def codon_to_amino_acid(c):
     assert len(c) == 3, c
     if c is None:
         return None
-    c = c
     if c in _codon_table:
         return _codon_table[c]
     return '?'
@@ -203,7 +203,7 @@ def get_sequence_dict(file_path, upper=True):
     """
     gdx_path = file_path + ".gdx"
     assert os.path.exists(gdx_path), ("Error: gdx does not exist for this fasta. We need the fasta files to be "
-                                     "flattened in place prior to running the pipeline because of concurrency issues.")
+                                      "flattened in place prior to running the pipeline because of concurrency issues.")
     if upper is True:
         return Fasta(file_path, record_class=UpperNpyFastaRecord)
     else:
