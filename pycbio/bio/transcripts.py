@@ -34,7 +34,7 @@ class Transcript(object):
     """
 
     __slots__ = ('name', 'strand', 'score', 'thick_start', 'rgb', 'thick_stop', 'start', 'stop', 'intron_intervals',
-                 'exon_intervals', 'exons', 'cds', 'mrna', 'block_sizes', 'block_starts', 'block_count', 'chromosome',
+                 'exon_intervals', 'exons', 'block_sizes', 'block_starts', 'block_count', 'chromosome',
                  'cds_size', 'transcript_size')
 
     def __init__(self, bed_tokens):
@@ -320,8 +320,6 @@ class Transcript(object):
         and the start/end positions and the exons. Sequence returned in
         5'-3' transcript orientation.
         """
-        if hasattr(self, "mrna"):
-            return self.mrna
         sequence = seq_dict[self.chromosome]
         assert self.stop <= len(sequence)
         s = []
@@ -331,7 +329,6 @@ class Transcript(object):
             mrna = "".join(s)
         else:
             mrna = reverse_complement("".join(s))
-        self.mrna = mrna
         return mrna
 
     def get_sequence(self, seq_dict):
@@ -348,8 +345,6 @@ class Transcript(object):
         The returned sequence is in the correct 5'-3' orientation (i.e. it has
         been reverse complemented if necessary).
         """
-        if hasattr(self, "cds"):
-            return self.cds
         sequence = seq_dict[self.chromosome]
         assert self.stop <= len(sequence)
         # make sure this isn't a non-coding gene
@@ -373,7 +368,6 @@ class Transcript(object):
             cds = reverse_complement("".join(s))
         else:
             cds = "".join(s)
-        self.cds = cds
         return cds
 
     def get_transcript_coordinate_cds_start(self):
@@ -634,15 +628,14 @@ class GenePredTranscript(Transcript):
         if in_frame is True:
             offset = find_offset(self.exon_frames, self.strand)
             cds = cds[offset:]
-        self.cds = cds
         return cds
 
-    def get_protein_sequence(self, seq_dict):
+    def get_protein_sequence(self, seq_dict, in_frame=True):
         """
         Returns the translated protein sequence for this transcript in single
         character space. Overrides this function in the Transcript class to make use of frame information.
         """
-        cds = self.get_cds(seq_dict)
+        cds = self.get_cds(seq_dict, in_frame)
         if len(cds) < 3:
             return ""
         return translate_sequence(cds)
