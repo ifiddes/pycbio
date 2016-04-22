@@ -28,9 +28,6 @@ class Transcript(object):
     exons: a list of Exon objects representing this transcript. These objects store mappings
         between chromosome, transcript and CDS coordinate space. Transcript and CDS coordinates
         are always transcript relative (5'->3').
-
-    To be more efficient, the cds and mRNA slots are saved for if those sequences are ever retrieved.
-    Then they will be stored so we don't slice the same thing over and over.
     """
 
     __slots__ = ('name', 'strand', 'score', 'thick_start', 'rgb', 'thick_stop', 'start', 'stop', 'intron_intervals',

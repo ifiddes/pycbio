@@ -30,9 +30,9 @@ def read_fasta(path_or_handle, validate='DNA'):
     line = fh.readline()
     chars_to_remove = "\n "
     if validate is 'DNA':
-        valid_chars = set('ACGTUYSWKMBDHVNacgtuyswkmbdhvn.-')
+        valid_chars = set('ACGTUYSWKMBDHVNacgtuyswkmbdhvn.-*')
     elif validate is 'protein':
-        valid_chars = set('ABCDEFGHIKLMPQSRTVWXYZUabcdefghiklmpqsrtvwxyzuNn.-')
+        valid_chars = set('ABCDEFGHIKLMPQSRTVWXYZUabcdefghiklmpqsrtvwxyzuNn.-*')
     else:
         valid_chars = set()
     while line != '':
